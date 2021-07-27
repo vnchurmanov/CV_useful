@@ -43,6 +43,36 @@ def compute_average(imlist):
     # возвращаем среднее в виде массива значений типа uint8
     return array(average_im, 'uint8')
 
+
+def pca(X):
+    """Метод главных компонент - principal component analysis -
+    вход: матрица X, в которой обучающие данные хранятся в виде
+    линеаризованных массивов, по одному в каждой строке
+    выход: матрица проекции (важное - в начале), дисперсия и среднее"""
+
+    # получаем количество измерений
+    num_data, dim = X.shape
+
+    # центрируем данные
+    mean_X = X.mean(axis=0)
+    X -= mean_X
+
+    if dim>num_data:
+        # PCA с компактным трюком
+        M = dot(X, X.T) # ковариационная матрица
+        e, eigen_values = linalg.eigh(M) # собственные значения и собственные векторы
+        tmp = dot(X.T, eigen_values).T # компактный трюк
+        V = tmp[::-1] # нужны последние собственные вектора
+        S = sqrt(e)[::-1] # собственные значения перечислены в порядке возрастания
+        for i in range(V.shape[1]):
+            V[:, i] /= S
+    else:
+        # PCA с использованием сингулярного разложения
+        U,S,V = linalg.svd(X)
+        V = V[:num_data] # возвращаем только первые num_data строки
+    return V, S, mean_X
+
+
 image = array(Image.open('car.jpeg').convert('L'))
 im2, cdf = equalize_hist(image)
 hist(im2.flatten(), 64)
